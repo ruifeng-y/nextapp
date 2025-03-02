@@ -20,6 +20,29 @@ import { PostDelete } from '../_components/post/delete';
 import { PostEditButton } from '../_components/post/edit-button';
 import { PostListPaginate } from '../_components/post/paginate';
 
+// import { CarouselPage } from '@/app/_components/home/carousel';
+import EmblaCarousel from '@/app/_components/home/carousel/js/EmblaCarousel';
+import { EmblaOptionsType } from 'embla-carousel'
+import Header from '@/app/_components/home/carousel/js/Header';
+import Footer from '@/app/_components/home/carousel/js/Footer';
+
+const OPTIONS: EmblaOptionsType = { loop: true }
+const SLIDE_COUNT = 5
+const SLIDES = Array.from(Array(SLIDE_COUNT).keys())
+
+import '@/app/_components/home/carousel/css/base.css';
+import '@/app/_components/home/carousel/css/sandbox.css';
+import '@/app/_components/home/carousel/css/embla.css';
+
+import { CarouselHome } from '@/app/_components/home/carousel/carousel-page';
+import { GridColumn } from '@/app/_components/home/grid/grid-column';
+// import { Navigation } from '@/app/_components/navigation-bar/navigation';
+// import { PlayerBar } from '@/app/_components/playerBar/playerBar';
+import { List } from '@/app/_components/playlist/playlist';
+import { SongList } from '@/app/_components/home/songList'
+
+import { get } from '@/app/api/api'
+
 import $styles from './page.module.css';
 
 /**
@@ -34,7 +57,13 @@ const HomePage: FC<{ searchParams: IPaginateQueryProps }> = async ({ searchParam
     const page = isNil(currentPage) || Number(currentPage) < 1 ? 1 : Number(currentPage);
     // 使用 queryPostPaginate 函数来获取文章数据。这个函数会根据当前的页数和每页显示的文章数量返回一个包含 items（文章列表）和 meta（分页信息）的对象。
     const { items, meta } = await queryPostPaginate({ page: Number(page), limit });
-
+    // 查询歌手列表
+    const singerListResponse = await get('api/content/singer/querySingerList')
+    const singerList = singerListResponse.data;
+    // 查询歌曲列表
+    const songListResponse = await get('api/content/songList/querySongList')
+    const songListData = songListResponse.data;
+    // console.log("调用 querySongList",songListData);
     // 如果当前页数大于总页数，页面会重定向到首页。
     if (meta.totalPages && meta.totalPages > 0 && page > meta.totalPages) {
         return redirect('/');
@@ -48,64 +77,13 @@ const HomePage: FC<{ searchParams: IPaginateQueryProps }> = async ({ searchParam
      */
     return (
         <div className="tw-page-container">
-            <Tools />
-            <div className={$styles.list}>
-                {items.map((item) => (
-                    <div
-                        className={$styles.item}
-                        // 传入css变量的封面图用于鼠标移动到此处后会出现不同颜色的光晕效果
-                        style={{ '--bg-img': `url(${item.thumb})` } as any}
-                        key={item.id}
-                    >
-                        <Link className={$styles.thumb} href={`/posts/${item.id}`}>
-                            <Image
-                                src={item.thumb}
-                                alt={item.title}
-                                fill
-                                priority
-                                sizes="100%"
-                                // 如果使用bun,请务必加上这个,因为bun中启用远程图片优化会报错
-                                unoptimized
-                            />
-                        </Link>
-                        <div className={$styles.content}>
-                            <div className={clsx($styles.title, 'tw-hover')}>
-                                <Link href={`/posts/${item.id}`}>
-                                    <h2 className="tw-ellips tw-animate-decoration tw-animate-decoration-lg">
-                                        {item.title}
-                                    </h2>
-                                </Link>
-                            </div>
-                            <div className={$styles.summary}>
-                                {/* 如果没有摘要，则显示文章内容的前 99 个字符。 */}
-                                {isNil(item.summary) ? item.body.substring(0, 99) : item.summary}
-                            </div>
-                            <div className={$styles.footer}>
-                                <div className={$styles.meta}>
-                                    <span>
-                                        {/* 一个来自 react-icons 的图标组件，显示一个日历图标。 */}
-                                        <AiOutlineCalendar />
-                                    </span>
-                                    <time className="tw-ellips">2024年8月10日</time>
-                                </div>
-                                <div className={$styles.meta}>
-                                    {/* 编辑按钮 */}
-                                    <PostEditButton id={item.id} />
-                                    {/* 删除按钮 */}
-                                    <PostDelete id={item.id} />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                ))}
-            </div>
-            {/* 
-                分页组件
-                如果总页数大于 1，则显示分页组件 PostListPaginate，用于切换不同的页面。
-                (!) 是非空断言操作符，用于 TypeScript 中。避免编译错误。
-                这段代码的作用是：在确认 meta.totalPages 非空的情况下，检查它是否大于 1，若为真则渲染分页组件 <PostListPaginate />。
-            */}
-            {meta.totalPages! > 1 && <PostListPaginate limit={8} page={page} />}
+            <CarouselHome/>
+            {/* <GridColumn/> */}
+            {/* <SongList/> */}
+            <List props={singerList}/>
+            <List props={songListData}/>
+            {/* <GridColumn/> */}
+            {/* <PlayerBar/> */}
         </div>
     );
 };
